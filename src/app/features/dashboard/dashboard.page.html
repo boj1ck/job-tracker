@@ -1,0 +1,240 @@
+<div class="space-y-5">
+  <div class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="text-sm font-extrabold tracking-tight">Your pipeline, at a glance</div>
+        <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Search, filter, sort — keep follow-ups tight and never lose track.
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          (click)="setView('cards')"
+          class="rounded-xl px-3 py-2 text-xs font-extrabold"
+          [class]="(vm$ | async)?.view === 'cards'
+            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+            : 'border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900'"
+        >Cards</button>
+
+        <button
+          (click)="setView('table')"
+          class="rounded-xl px-3 py-2 text-xs font-extrabold"
+          [class]="(vm$ | async)?.view === 'table'
+            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+            : 'border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900'"
+        >Table</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="vm$ | async as vm">
+  <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <jt-kpi-card label="Total" [value]="vm.kpis.total"></jt-kpi-card>
+    <jt-kpi-card label="Active" [value]="vm.kpis.active"></jt-kpi-card>
+    <jt-kpi-card label="Interviews" [value]="vm.kpis.interviews"></jt-kpi-card>
+    <jt-kpi-card label="Offers" [value]="vm.kpis.offers"></jt-kpi-card>
+    <jt-kpi-card label="Stale (7d+)" [value]="vm.kpis.stale" hint="Needs follow-up"></jt-kpi-card>
+  </div>
+</ng-container>
+
+  </div>
+
+  <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <ng-container *ngIf="vm$ | async as vm">
+  <jt-search-bar
+    placeholder="Company, role, location, tags…"
+    [value]="vm.filters.q"
+    (valueChange)="setSearch($event)"
+  ></jt-search-bar>
+</ng-container>
+
+    </div>
+
+    <div class="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      <div class="grid grid-cols-2 gap-2">
+        <select (change)="setStage($any($event.target).value)" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold dark:border-zinc-800 dark:bg-zinc-950">
+          <option>All</option>
+          <option>Applied</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+          <option>Ghosted</option>
+        </select>
+
+        <select (change)="setWorkMode($any($event.target).value)" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold dark:border-zinc-800 dark:bg-zinc-950">
+          <option>All</option>
+          <option>Remote</option>
+          <option>Hybrid</option>
+          <option>On-site</option>
+        </select>
+
+        <select (change)="setStatus($any($event.target).value)" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold dark:border-zinc-800 dark:bg-zinc-950">
+          <option>All</option>
+          <option>Active</option>
+          <option>Closed</option>
+        </select>
+
+        <select (change)="setPriority($any($event.target).value)" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold dark:border-zinc-800 dark:bg-zinc-950">
+          <option>All</option>
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+
+      <div class="mt-2 flex items-center gap-2">
+        <select (change)="setSortKey($any($event.target).value)" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold dark:border-zinc-800 dark:bg-zinc-950">
+          <option value="lastTouchAt">Sort: last touch</option>
+          <option value="appliedAt">Sort: applied date</option>
+          <option value="company">Sort: company</option>
+          <option value="stage">Sort: stage</option>
+          <option value="priority">Sort: priority</option>
+        </select>
+
+        <button (click)="toggleSortDir()" class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-extrabold hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900">
+          Dir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="vm$ | async as vm; else loading">
+    <div *ngIf="vm.view === 'cards'" class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <button
+        *ngFor="let item of vm.items"
+        (click)="openDetails(item)"
+        class="text-left rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-sm font-extrabold tracking-tight">{{ item.company }}</div>
+            <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ item.role }}</div>
+          </div>
+          <span [class]="badgeClass(item.stage)">{{ item.stage }}</span>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+            {{ item.workMode }}
+          </span>
+          <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+            {{ item.location }}
+          </span>
+          <span [class]="priorityPill(item.priority)">{{ item.priority }}</span>
+          <span class="rounded-full border border-zinc-200 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:border-zinc-800 dark:text-zinc-200">
+            touched {{ daysSince(item.lastTouchAt) }}d ago
+          </span>
+        </div>
+
+        <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+          <div class="rounded-xl bg-zinc-50 p-2 dark:bg-zinc-900/40">
+            <div class="font-bold">Applied</div>
+            <div class="mt-0.5 text-zinc-500 dark:text-zinc-400">{{ item.appliedAt }}</div>
+          </div>
+          <div class="rounded-xl bg-zinc-50 p-2 dark:bg-zinc-900/40">
+            <div class="font-bold">Next</div>
+            <div class="mt-0.5 text-zinc-500 dark:text-zinc-400">{{ item.nextStep || "—" }}</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div *ngIf="vm.view === 'table'" class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      <div class="overflow-auto">
+        <table class="min-w-[900px] w-full text-left text-sm">
+          <thead class="border-b border-zinc-200 bg-zinc-50 text-xs font-extrabold text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
+            <tr>
+              <th class="px-4 py-3">Company</th>
+              <th class="px-4 py-3">Role</th>
+              <th class="px-4 py-3">Stage</th>
+              <th class="px-4 py-3">Mode</th>
+              <th class="px-4 py-3">Priority</th>
+              <th class="px-4 py-3">Last touch</th>
+              <th class="px-4 py-3">Next</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let item of vm.items"
+              class="border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-900 dark:hover:bg-zinc-900/30"
+            >
+              <td class="px-4 py-3 font-bold">
+                <button (click)="openDetails(item)" class="hover:underline">{{ item.company }}</button>
+              </td>
+              <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ item.role }}</td>
+              <td class="px-4 py-3"><span [class]="badgeClass(item.stage)">{{ item.stage }}</span></td>
+              <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ item.workMode }}</td>
+              <td class="px-4 py-3"><span [class]="priorityPill(item.priority)">{{ item.priority }}</span></td>
+              <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ item.lastTouchAt }} ({{ daysSince(item.lastTouchAt) }}d)</td>
+              <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ item.nextStep || "—" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="vm.items.length === 0" class="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+      No results. Try clearing filters or searching something else.
+    </div>
+  </ng-container>
+
+  <ng-template #loading>
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <jt-skeleton [lines]="7"></jt-skeleton>
+      <jt-skeleton [lines]="7"></jt-skeleton>
+    </div>
+  </ng-template>
+
+  <jt-modal [open]="modalOpen" [title]="selected?.company + ' — ' + (selected?.role || '')" (close)="closeDetails()">
+    <div *ngIf="selected" class="space-y-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span [class]="badgeClass(selected.stage)">{{ selected.stage }}</span>
+        <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">{{ selected.workMode }}</span>
+        <span class="rounded-full border border-zinc-200 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:border-zinc-800 dark:text-zinc-200">{{ selected.location }}</span>
+        <span [class]="priorityPill(selected.priority)">{{ selected.priority }}</span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div class="rounded-2xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <div class="text-xs font-extrabold text-zinc-600 dark:text-zinc-300">Timeline</div>
+          <div class="mt-2 text-sm">
+            <div class="flex justify-between"><span class="text-zinc-500 dark:text-zinc-400">Applied</span><span class="font-bold">{{ selected.appliedAt }}</span></div>
+            <div class="mt-1 flex justify-between"><span class="text-zinc-500 dark:text-zinc-400">Last touch</span><span class="font-bold">{{ selected.lastTouchAt }} ({{ daysSince(selected.lastTouchAt) }}d)</span></div>
+            <div class="mt-1 flex justify-between"><span class="text-zinc-500 dark:text-zinc-400">Status</span><span class="font-bold">{{ selected.status }}</span></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <div class="text-xs font-extrabold text-zinc-600 dark:text-zinc-300">Compensation</div>
+          <div class="mt-2 text-sm">
+            <div class="flex justify-between"><span class="text-zinc-500 dark:text-zinc-400">Min</span><span class="font-bold">{{ money(selected.salaryMin) }}</span></div>
+            <div class="mt-1 flex justify-between"><span class="text-zinc-500 dark:text-zinc-400">Max</span><span class="font-bold">{{ money(selected.salaryMax) }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-200 p-3 dark:border-zinc-800">
+        <div class="text-xs font-extrabold text-zinc-600 dark:text-zinc-300">Next step</div>
+        <div class="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{{ selected.nextStep || "—" }}</div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-200 p-3 dark:border-zinc-800">
+        <div class="text-xs font-extrabold text-zinc-600 dark:text-zinc-300">Notes</div>
+        <div class="mt-1 whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-200">{{ selected.notes || "—" }}</div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap gap-2">
+          <span *ngFor="let t of (selected.tags || [])" class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+            #{{ t }}
+          </span>
+        </div>
+
+        <a *ngIf="selected.link" class="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 dark:bg-white dark:text-zinc-900" [href]="selected.link" target="_blank">
+          Open link
+        </a>
+      </div>
+    </div>
+  </jt-modal>
+</div>
