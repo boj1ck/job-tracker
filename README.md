@@ -3,6 +3,10 @@
 A simple and clean job applications tracker built with Angular.  
 Helps you keep track of your job pipeline, follow-ups, and application status without any backend.
 
+## Preview
+
+![Job Tracker Preview](screenshots/image.png)
+
 ## Features
 - Dashboard KPIs (total, active, interviews, offers, stale applications)
 - Search and filtering
